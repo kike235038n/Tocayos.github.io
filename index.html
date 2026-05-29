@@ -177,11 +177,29 @@
     });
 
     function generarURLConDatos() {
-        const json       = JSON.stringify(registros);
-        const compressed = pako.deflate(json);
-        const b64        = btoa(String.fromCharCode(...compressed));
-        return BASE_URL + "?d=" + encodeURIComponent(b64);
-    }
+    // 1. Quitamos el ID (se regenera al cargar)
+    // 2. Simplificamos fecha de "29-May-2026" a "260529" (ejemplo)
+    const datosCompactos = registros.map(r => {
+        // Ejemplo simple para acortar fecha: DDMMYY
+        const f = r.fecha.split('-'); 
+        const fechaCorta = f[0].slice(-2) + (f[1] === 'May' ? '05' : '01'); // Ajusta según tu formato real
+        
+        return [
+            fechaCorta, 
+            r.concepto, 
+            r.codigo, 
+            r.producto, 
+            r.entrada, 
+            r.salida, 
+            r.unitario
+        ];
+    });
+    
+    const json = JSON.stringify(datosCompactos);
+    const compressed = pako.deflate(json);
+    const b64 = btoa(String.fromCharCode(...compressed));
+    return BASE_URL + "?d=" + encodeURIComponent(b64);
+}
 
     function mostrarQR() {
         if (registros.length === 0) {
@@ -274,33 +292,59 @@
 }
 
     function procesarQREscaneado(texto) {
-        try {
-            const url    = new URL(texto);
-            const params = new URLSearchParams(url.search);
-            const datos  = params.get('d');
-            if (!datos) {
-                alert("❌ Este QR no contiene datos de inventario válidos.");
-                return;
-            }
-            const json      = pako.inflate(Uint8Array.from(atob(decodeURIComponent(datos)), c => c.charCodeAt(0)), { to: 'string' });
-            const importado = JSON.parse(json);
-            if (Array.isArray(importado) && importado.length > 0) {
-                if (registros.length > 0) {
-                    if (!confirm(`Ya tienes ${registros.length} registros. ¿Reemplazar con los ${importado.length} del QR?`)) return;
-                }
-                registros  = importado;
-                idRegistro = Math.max(...registros.map(r => r.id || 0)) + 1;
-                calcularYRenderizarKardex();
-                cambiarPantalla('pantalla-vista');
-                alert(`✅ Cargados ${registros.length} movimientos desde el QR.`);
-            } else {
-                alert("❌ El QR no contiene registros válidos.");
-            }
-        } catch(e) {
-            console.error("Error procesando QR:", e);
-            alert("❌ No se pudo leer el QR. Asegúrate de que sea un QR generado por este sistema.");
+    try {
+        // 1. Extraer los datos de la URL
+        const url = new URL(texto);
+        const params = new URLSearchParams(url.search);
+        const datos = params.get('d');
+        
+        if (!datos) {
+            alert("❌ Este QR no contiene datos de inventario válidos.");
+            return;
         }
+
+        // 2. Descomprimir y convertir a JSON
+        const json = pako.inflate(Uint8Array.from(atob(decodeURIComponent(datos)), c => c.charCodeAt(0)), { to: 'string' });
+        const importado = JSON.parse(json);
+
+        // 3. Validar y procesar
+        if (Array.isArray(importado) && importado.length > 0) {
+            // Preguntar al usuario antes de sobrescribir si ya tiene datos
+            if (registros.length > 0) {
+                if (!confirm(`Ya tienes ${registros.length} registros. ¿Reemplazar con los ${importado.length} del QR?`)) {
+                    return;
+                }
+            }
+
+            // 4. RECONSTRUCCIÓN: Convertimos los arreglos compactos de vuelta a objetos
+            // Esto asume que cada 'arr' viene en el orden: [fecha, concepto, codigo, producto, entrada, salida, unitario]
+            registros = importado.map((arr, index) => ({
+                id: index + 1,       // Regeneramos el ID basado en el orden
+                fecha: arr[0],
+                concepto: arr[1],
+                codigo: arr[2],
+                producto: arr[3],
+                entrada: arr[4],
+                salida: arr[5],
+                unitario: arr[6]
+            }));
+
+            // Actualizar el contador global de IDs para futuros registros
+            idRegistro = Math.max(...registros.map(r => r.id || 0)) + 1;
+
+            // 5. Refrescar la interfaz
+            calcularYRenderizarKardex();
+            cambiarPantalla('pantalla-vista');
+            
+            alert(`✅ Cargados ${registros.length} movimientos correctamente.`);
+        } else {
+            alert("❌ El QR no contiene registros válidos.");
+        }
+    } catch(e) {
+        console.error("Error procesando QR:", e);
+        alert("❌ No se pudo leer el QR. Asegúrate de que haya sido generado por la versión más reciente del sistema.");
     }
+}
 
     function cambiarPantalla(id) {
         document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
