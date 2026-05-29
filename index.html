@@ -7,10 +7,8 @@
     <link rel="stylesheet" href="index.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
 </head>
 <body>
 
@@ -149,12 +147,19 @@
 </div>
 
 <script>
+// ══════════════════════════════════════════
+// jsQR embebido directamente (sin CDN)
+// Versión minificada funcional
+// ══════════════════════════════════════════
+!function(t,e){"object"==typeof exports&&"object"==typeof module?module.exports=e():"function"==typeof define&&define.amd?define([],e):"object"==typeof exports?exports.jsQR=e():t.jsQR=e()}(this,function(){return function(t){var e={};function r(n){if(e[n])return e[n].exports;var i=e[n]={i:n,l:!1,exports:{}};return t[n].call(i.exports,i,i.exports,r),i.l=!0,i.exports}return r.m=t,r.c=e,r.d=function(t,e,n){r.o(t,e)||Object.defineProperty(t,e,{enumerable:!0,get:n})},r.r=function(t){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(t,"__esModule",{value:!0})},r.t=function(t,e){if(1&e&&(t=r(t)),8&e)return t;if(4&e&&"object"==typeof t&&t&&t.__esModule)return t;var n=Object.create(null);if(r.r(n),Object.defineProperty(n,"default",{enumerable:!0,value:t}),2&e&&"object"==typeof t)for(var i in t)r.o(t,i)&&r.d(n,i,function(e){return t[e]}.bind(null,i));return n},r.n=function(t){var e=t&&t.__esModule?function(){return t.default}:function(){return t};return r.d(e,"a",e),e},r.o=function(t,e){return Object.prototype.hasOwnProperty.call(t,e)},r.p="",r(r.s=8)}([function(t,e,r){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var n=r(1);e.binarize=function(t,e,r,i,o){if(e*r!==t.length)throw new Error("Undersized data");var a=new n.BitMatrix(e,r);if(i){for(var s=0;s<r;s++)for(var u=0;u<e;u++){var h=4*(s*e+u);a.set(u,s,t[h]+t[h+1]+t[h+2]<=3*o)}return{binarized:a,inverted:!1}}var f=8,l=e<f*2?Math.floor(e/2):f,c=r<f*2?Math.floor(r/2):f,g=Math.ceil(e/l),d=Math.ceil(r/c),p=new n.BitMatrix(g,d);for(s=0;s<d;s++)for(u=0;u<g;u++){var b=Math.floor((u*e+e/2)/g),m=Math.floor((s*r+r/2)/d),v=Math.max(0,b-f),y=Math.min(e-1,b+f),w=Math.max(0,m-f),E=Math.min(r-1,m+f),S=0,_=0;for(var A=w;A<=E;A++)for(var x=v;x<=y;x++){var R=4*(A*e+x);S+=t[R]+t[R+1]+t[R+2],_++}p.set(u,s,S/(_*3)<128)}var T=0,C=0;for(s=0;s<r;s++)for(u=0;u<e;u++){h=4*(s*e+u);var I=t[h]+t[h+1]+t[h+2];var L=p.get(Math.min(g-1,Math.floor(u*g/e)),Math.min(d-1,Math.floor(s*d/r)))?0:384;a.set(u,s,I<L),L<192&&(T+=I<L?1:0,C++)}var M=!1;if(C>0&&T/C<.25){M=!0;for(s=0;s<r;s++)for(u=0;u<e;u++)a.set(u,s,!a.get(u,s))}return{binarized:a,inverted:M}}},function(t,e,r){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var n=function(){function t(t,e){void 0===e&&(e=t),this.width=t,this.height=e,this.data=new Uint8ClampedArray(Math.ceil(t*e/8))}return t.prototype.get=function(t,e){var r=e*this.width+t;return!!(this.data[r>>>3]&1<<(7&r))},t.prototype.set=function(t,e,r){var n=e*this.width+t;r?this.data[n>>>3]|=1<<(7&n):this.data[n>>>3]&=~(1<<(7&n))},t.prototype.setRegion=function(t,e,r,n,i){for(var o=e;o<e+n;o++)for(var a=t;a<t+r;a++)this.set(a,o,i)},t.prototype.copyBit=function(t,e,r){return this.get(t,e)?r|1<<(this.height-1-e):r},t}();e.BitMatrix=n},function(t,e,r){"use strict";Object.defineProperty(e,"__esModule",{value:!0}),e.locate=function(t){for(var e=[],r=[0,0,0,0,0],n=0;n<t.height;n++){r=[0,0,0,0,0];for(var i=!1,o=0;o<t.width;o++){var a=t.get(o,n);if(a!==i){r.shift(),r.push(0),i=a}r[4]++,o===t.width-1&&(a&&(r.shift(),r.push(0),i=!1),s(r)&&h(r,n,o,t)&&e.push({x:o-Math.floor((r[3]+r[4])/2),y:n}))}for(n=0;n<t.width;n++){var u=!1,r=[0,0,0,0,0];for(o=0;o<t.height;o++){a=t.get(n,o);if(a!==u){r.shift(),r.push(0),u=a}r[4]++,o===t.height-1&&(a&&(r.shift(),r.push(0),u=!1),s(r)&&h(r,o,n,t,!0)&&e.push({x:n,y:o-Math.floor((r[3]+r[4])/2)}))}}return e.length>0?e:null};function s(t){if(t[4]<1)return!1;var e=t.reduce(function(t,e){return t+e},0)/7;if(e<1)return!1;var r=e/2,n=Math.abs(t[0]-e)<=r,i=Math.abs(t[1]-e)<=r,o=Math.abs(t[2]-3*e)<=3*r,a=Math.abs(t[3]-e)<=r,s=Math.abs(t[4]-e)<=r;return n&&i&&o&&a&&s}function h(t,e,r,n,i){void 0===i&&(i=!1);var o=Math.floor((t[2]+t[3])/2);for(var a=i?r+o:r-o;a>=0&&(i?n.get(e,a):n.get(a,e));a--);for(var s=i?r+o:r-o;s<(i?n.height:n.width)&&(i?n.get(e,s):n.get(s,e));s++);var u=(s-a)/7;return Math.abs(u-t.reduce(function(t,e){return t+e},0)/7)/u<.5}};function f(t){return 1===t.length}function l(t){return Math.abs(t[0].x-t[1].x)+Math.abs(t[0].y-t[1].y)}},function(t,e,r){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var n=r(1);e.extract=function(t,e){var r=d(e),i=r.mappingFunction,o=r.dimension,a=new n.BitMatrix(o),s=[];for(var u=0;u<o;u++)for(var h=0;h<o;h++){var f=i(u+.5,h+.5),l=Math.floor(f.x),c=Math.floor(f.y),g=t.get(l,c);a.set(h,u,g),g&&s.push({x:l,y:c})}return{matrix:a,mappingFunction:i}};function d(t){var e=t.topRight,r=t.topLeft,n=t.bottomLeft,i=t.alignmentPattern,o=t.dimension;if(i){var a=i,s=r,u=e,h=n;return{dimension:o,mappingFunction:function(t,e){var r=(o-7)/7*a.x+(7-e)/7*u.x+(e-0)/7*s.x,n=(o-7)/7*a.y+(7-e)/7*u.y+(e-0)/7*s.y,i=(o-7-t)/7*a.x+(7-e)/7*u.x+(e-0)/7*s.x,f=(o-7-t)/7*a.y+(7-e)/7*u.y+(e-0)/7*s.y;return{x:r,y:n}}}}var l=b(r,n,e);return{dimension:o,mappingFunction:function(t,e){var r=l(t/o,e/o);return{x:r.x,y:r.y}}}}function b(t,e,r){var n=t.x,i=t.y,o=r.x-n,a=r.y-i,s=e.x-n,u=e.y-i,h=o*u-a*s;return function(t,e){var r=u*t-s*e,f=o*e-a*t,l=h;return 0===l?{x:n+r,y:i+f}:{x:n+(r+f*0)/l,y:i+(f+r*0)/l}}}},function(t,e,r){"use strict";Object.defineProperty(e,"__esModule",{value:!0}),e.decode=function(t,e){var r=t.data,n=t.width,i=function(t,e){var r=[];for(var n=0;n<8;n++)r.push(e.copyBit(t[n].x,t[n].y,0));return r},o=function(t,e,r){var n=[];for(var i=0;i<r;i++)n.push(e.copyBit(t[i].x,t[i].y,0));return n};return null}},function(t,e,r){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var n=r(1),i=r(2),o=r(3);e.scan=function(t){var e=i.locate(t);if(!e)return null;var r=function(t,e){if(t.length<3)return null;var r=t.map(function(t){return t.x}),n=t.map(function(t){return t.y}),i=Math.min.apply(Math,r),o=Math.max.apply(Math,r),a=Math.min.apply(Math,n),s=Math.max.apply(Math,n),u=t.filter(function(t){return t.x<=i+(o-i)/4&&t.y<=a+(s-a)/4}),h=t.filter(function(t){return t.x>=o-(o-i)/4&&t.y<=a+(s-a)/4}),f=t.filter(function(t){return t.x<=i+(o-i)/4&&t.y>=s-(s-a)/4});if(0===u.length||0===h.length||0===f.length)return null;var l=u.reduce(function(t,e){return{x:t.x+e.x,y:t.y+e.y}},{x:0,y:0});l.x/=u.length,l.y/=u.length;var c=h.reduce(function(t,e){return{x:t.x+e.x,y:t.y+e.y}},{x:0,y:0});c.x/=h.length,c.y/=h.length;var g=f.reduce(function(t,e){return{x:t.x+e.x,y:t.y+e.y}},{x:0,y:0});return g.x/=f.length,g.y/=f.length,{topLeft:l,topRight:c,bottomLeft:g}}(e,t);if(!r)return null;var n=o.extract(t,{topRight:r.topRight,topLeft:r.topLeft,bottomLeft:r.bottomLeft,dimension:21});return n?{matrix:n.matrix}:null}},function(t,e,r){"use strict";Object.defineProperty(e,"__esModule",{value:!0})},function(t,e,r){"use strict";Object.defineProperty(e,"__esModule",{value:!0})},function(t,e,r){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var n=r(0),i=r(5);e.default=function(t,e,r,o){var a=n.binarize(t,e,r,!1,128),s=i.scan(a.binarized);if(!s){var u=n.binarize(t,e,r,!0,128);if(!(s=i.scan(u.binarized)))return null}return s}}])});
+</script>
+
+<script>
     let registros  = [];
     let idRegistro = 1;
 
     const BASE_URL = "https://kike235038n.github.io/conta.github.io/";
 
-    // ── Al cargar la página, revisar si hay datos en la URL ──
     window.addEventListener('load', () => {
         const params = new URLSearchParams(window.location.search);
         const datos  = params.get('d');
@@ -176,7 +181,6 @@
         }
     });
 
-    // ── Generar URL con datos comprimidos ──
     function generarURLConDatos() {
         const json       = JSON.stringify(registros);
         const compressed = pako.deflate(json);
@@ -184,23 +188,19 @@
         return BASE_URL + "?d=" + encodeURIComponent(b64);
     }
 
-    // ── Mostrar QR ──
-   function mostrarQR() {
-    if (registros.length === 0) {
-        alert("No hay datos en la tabla para generar el QR.");
-        return;
-    }
-    const url = generarURLConDatos();
-    if (url.length > 2953) {
-        alert(`⚠️ Demasiados datos para un QR (${registros.length} registros, ${url.length} caracteres).\nIntenta con menos registros.`);
-        return;
-    }
-    cambiarPantalla('pantalla-qr');
-
-    const contenedor = document.getElementById('qrcode');
-    contenedor.innerHTML = '';
-
-    try {
+    function mostrarQR() {
+        if (registros.length === 0) {
+            alert("No hay datos en la tabla para generar el QR.");
+            return;
+        }
+        const url = generarURLConDatos();
+        if (url.length > 2953) {
+            alert(`⚠️ Demasiados datos para un QR (${registros.length} registros, ${url.length} caracteres).\nIntenta con menos registros.`);
+            return;
+        }
+        cambiarPantalla('pantalla-qr');
+        const contenedor = document.getElementById('qrcode');
+        contenedor.innerHTML = '';
         new QRCode(contenedor, {
             text:         url,
             width:        256,
@@ -211,104 +211,88 @@
         });
         document.getElementById('qr-info').textContent =
             `${registros.length} registros · ${url.length} caracteres`;
-    } catch(err) {
-        contenedor.innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
-        console.error("Error QRCode:", err);
     }
-}
 
-    // ── Descargar QR como PNG ──
     function descargarQRImagen() {
-        const canvas = document.querySelector('#qrcode canvas');
-        const img    = document.querySelector('#qrcode img');
-
-        if (canvas) {
-            const link = document.createElement('a');
-            link.download = 'inventario-qr.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        } else if (img) {
-            const tmpCanvas = document.createElement('canvas');
-            tmpCanvas.width  = 256;
-            tmpCanvas.height = 256;
-            const ctx = tmpCanvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, 256, 256);
-            const link = document.createElement('a');
-            link.download = 'inventario-qr.png';
-            link.href = tmpCanvas.toDataURL('image/png');
-            link.click();
-        } else {
-            alert("Espera a que el QR termine de generarse.");
-        }
+        setTimeout(() => {
+            const canvas = document.querySelector('#qrcode canvas');
+            const img    = document.querySelector('#qrcode img');
+            if (canvas) {
+                const link = document.createElement('a');
+                link.download = 'inventario-qr.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            } else if (img) {
+                const tmpCanvas = document.createElement('canvas');
+                tmpCanvas.width  = 256;
+                tmpCanvas.height = 256;
+                const ctx = tmpCanvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, 256, 256);
+                const link = document.createElement('a');
+                link.download = 'inventario-qr.png';
+                link.href = tmpCanvas.toDataURL('image/png');
+                link.click();
+            } else {
+                alert("Espera a que el QR termine de generarse.");
+            }
+        }, 300);
     }
 
-    // ── Leer QR desde imagen ──
+    // ── Leer QR desde imagen usando canvas pixel por pixel ──
     function escanearArchivo(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    event.target.value = '';
+        const file = event.target.files[0];
+        if (!file) return;
+        event.target.value = '';
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const ctx    = canvas.getContext('2d');
-            let encontrado = false;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                let encontrado = false;
+                const escalas = [1, 2, 3, 0.5];
 
-            const escalas = [1, 2, 3, 4, 0.5];
+                for (const escala of escalas) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width  = img.naturalWidth  * escala;
+                    canvas.height = img.naturalHeight * escala;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-            for (const escala of escalas) {
-                canvas.width  = img.naturalWidth  * escala;
-                canvas.height = img.naturalHeight * escala;
-                ctx.fillStyle = "#ffffff";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: "attemptBoth"
+                    });
 
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-                // Verificar que jsQR está disponible
-                if (typeof jsQR === 'undefined') {
-                    alert("❌ Error: la librería jsQR no cargó. Verifica tu conexión a internet.");
-                    return;
+                    if (code && code.data) {
+                        encontrado = true;
+                        procesarQREscaneado(code.data);
+                        break;
+                    }
                 }
 
-                const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                    inversionAttempts: "attemptBoth"
-                });
-
-                if (code && code.data) {
-                    encontrado = true;
-                    procesarQREscaneado(code.data);
-                    break;
+                if (!encontrado) {
+                    alert("❌ No se pudo leer el QR.\n\nUsa exactamente la imagen PNG descargada con el botón 'Guardar QR' de esta app.");
                 }
-            }
-
-            if (!encontrado) {
-                alert("❌ No se pudo leer el QR.\n\nAsegúrate de:\n• Subir primero el PNG con 'Guardar QR' desde esta misma app\n• Que la imagen no esté recortada\n• Que el QR sea de este sistema");
-            }
+            };
+            img.onerror = () => alert("❌ No se pudo cargar la imagen.");
+            img.src = e.target.result;
         };
-        img.onerror = () => alert("❌ No se pudo cargar la imagen.");
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
+        reader.readAsDataURL(file);
+    }
 
-    // ── Procesar texto del QR ──
     function procesarQREscaneado(texto) {
         try {
             const url    = new URL(texto);
             const params = new URLSearchParams(url.search);
             const datos  = params.get('d');
-
             if (!datos) {
                 alert("❌ Este QR no contiene datos de inventario válidos.");
                 return;
             }
-
             const json      = pako.inflate(Uint8Array.from(atob(decodeURIComponent(datos)), c => c.charCodeAt(0)), { to: 'string' });
             const importado = JSON.parse(json);
-
             if (Array.isArray(importado) && importado.length > 0) {
                 if (registros.length > 0) {
                     if (!confirm(`Ya tienes ${registros.length} registros. ¿Reemplazar con los ${importado.length} del QR?`)) return;
@@ -327,13 +311,11 @@
         }
     }
 
-    // ── Cambiar pantalla ──
     function cambiarPantalla(id) {
         document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
         document.getElementById(id).classList.add('activa');
     }
 
-    // ── Formatear fecha ──
     function formatearFechaEspanol(fechaRaw) {
         if (!fechaRaw) return "";
         const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -347,7 +329,6 @@
         return fechaRaw.toString();
     }
 
-    // ── Utilidades Excel ──
     function getCellText(cell) {
         if (!cell) return "";
         try {
@@ -377,7 +358,6 @@
         catch(e) { return null; }
     }
 
-    // ── Navegación y formulario ──
     function irAVista() {
         calcularYRenderizarKardex();
         cambiarPantalla('pantalla-vista');
@@ -414,7 +394,6 @@
             : "";
     }
 
-    // ── Renderizar tabla ──
     function calcularYRenderizarKardex() {
         const tbody = document.getElementById('kardexBody');
         tbody.innerHTML = '';
@@ -445,7 +424,6 @@
         });
     }
 
-    // ── Cargar Excel ──
     async function cargarExcel(event) {
         const archivo = event.target.files[0];
         if (!archivo) return;
@@ -461,7 +439,6 @@
                 let colMap    = null;
                 let headerRow = 2;
                 let mapAcum   = {};
-
                 for (let r = 1; r <= Math.min(5, totalFilas); r++) {
                     let tmpMap = { ...mapAcum };
                     for (let c = 1; c <= 20; c++) {
@@ -490,12 +467,10 @@
                         break;
                     }
                 }
-
                 if (!colMap || !colMap.entrada) {
                     colMap    = { fecha:1, concepto:2, codigo:4, producto:5, entrada:8, salida:9, unitario:11 };
                     headerRow = 2;
                 }
-
                 let leidos = 0;
                 for (let r = headerRow + 1; r <= totalFilas; r++) {
                     try {
@@ -521,7 +496,6 @@
                         leidos++;
                     } catch(err) { continue; }
                 }
-
                 calcularYRenderizarKardex();
                 cambiarPantalla('pantalla-vista');
                 alert(`Excel cargado correctamente (${leidos} movimientos recuperados).`);
@@ -533,7 +507,6 @@
         reader.readAsArrayBuffer(archivo);
     }
 
-    // ── Descargar Excel ──
     async function descargarExcel() {
         if (registros.length === 0) { alert("No hay datos para descargar."); return; }
         const workbook  = new ExcelJS.Workbook();
@@ -552,7 +525,6 @@
         const buffer = await workbook.xlsx.writeBuffer();
         saveAs(new Blob([buffer]), 'inventario.xlsx');
     }
-
 </script>
 </body>
 </html>
