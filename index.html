@@ -235,47 +235,55 @@
 
     // ── Leer QR desde imagen usando canvas pixel por pixel ──
     function escanearArchivo(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        event.target.value = '';
+    const file = event.target.files[0];
+    if (!file) return;
+    event.target.value = '';
 
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = new Image();
-            img.onload = function() {
-                let encontrado = false;
-                const escalas = [1, 2, 3, 0.5];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            console.log(`Imagen cargada: ${img.naturalWidth}x${img.naturalHeight}`);
+            let encontrado = false;
+            // Añadimos una escala más grande por si la imagen es pequeña
+            const escalas = [1, 1.5, 2]; 
 
-                for (const escala of escalas) {
-                    const canvas = document.createElement('canvas');
-                    canvas.width  = img.naturalWidth  * escala;
-                    canvas.height = img.naturalHeight * escala;
-                    const ctx = canvas.getContext('2d');
-                    ctx.fillStyle = "#ffffff";
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            for (const escala of escalas) {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth * escala;
+                canvas.height = img.naturalHeight * escala;
+                const ctx = canvas.getContext('2d');
+                
+                // Fondo blanco obligatorio
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                        inversionAttempts: "attemptBoth"
-                    });
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                
+                console.log(`Intentando escala ${escala}...`);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "attemptBoth"
+                });
 
-                    if (code && code.data) {
-                        encontrado = true;
-                        procesarQREscaneado(code.data);
-                        break;
-                    }
+                if (code && code.data) {
+                    console.log("¡QR Detectado con éxito!", code.data);
+                    encontrado = true;
+                    procesarQREscaneado(code.data);
+                    break;
+                } else {
+                    console.log(`Escala ${escala} fallida.`);
                 }
+            }
 
-                if (!encontrado) {
-                    alert("❌ No se pudo leer el QR.\n\nUsa exactamente la imagen PNG descargada con el botón 'Guardar QR' de esta app.");
-                }
-            };
-            img.onerror = () => alert("❌ No se pudo cargar la imagen.");
-            img.src = e.target.result;
+            if (!encontrado) {
+                alert("❌ No se pudo leer el QR. Revisa la consola (F12) para más detalles.");
+            }
         };
-        reader.readAsDataURL(file);
-    }
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
 
     function procesarQREscaneado(texto) {
         try {
