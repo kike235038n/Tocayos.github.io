@@ -9,8 +9,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
 </head>
 <body>
 
@@ -185,21 +185,22 @@
     }
 
     // ── Mostrar QR ──
-    function mostrarQR() {
-        if (registros.length === 0) {
-            alert("No hay datos en la tabla para generar el QR.");
-            return;
-        }
-        const url = generarURLConDatos();
-        if (url.length > 2953) {
-            alert(`⚠️ Demasiados datos para un QR (${registros.length} registros, ${url.length} caracteres).\nIntenta con menos registros.`);
-            return;
-        }
-        cambiarPantalla('pantalla-qr');
+   function mostrarQR() {
+    if (registros.length === 0) {
+        alert("No hay datos en la tabla para generar el QR.");
+        return;
+    }
+    const url = generarURLConDatos();
+    if (url.length > 2953) {
+        alert(`⚠️ Demasiados datos para un QR (${registros.length} registros, ${url.length} caracteres).\nIntenta con menos registros.`);
+        return;
+    }
+    cambiarPantalla('pantalla-qr');
 
-        const contenedor = document.getElementById('qrcode');
-        contenedor.innerHTML = '';
+    const contenedor = document.getElementById('qrcode');
+    contenedor.innerHTML = '';
 
+    try {
         new QRCode(contenedor, {
             text:         url,
             width:        256,
@@ -208,10 +209,13 @@
             colorLight:   "#ffffff",
             correctLevel: QRCode.CorrectLevel.M
         });
-
         document.getElementById('qr-info').textContent =
             `${registros.length} registros · ${url.length} caracteres`;
+    } catch(err) {
+        contenedor.innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
+        console.error("Error QRCode:", err);
     }
+}
 
     // ── Descargar QR como PNG ──
     function descargarQRImagen() {
@@ -240,48 +244,55 @@
 
     // ── Leer QR desde imagen ──
     function escanearArchivo(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        event.target.value = '';
+    const file = event.target.files[0];
+    if (!file) return;
+    event.target.value = '';
 
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                const ctx    = canvas.getContext('2d');
-                let encontrado = false;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx    = canvas.getContext('2d');
+            let encontrado = false;
 
-                const escalas = [1, 2, 3, 4, 0.5];
+            const escalas = [1, 2, 3, 4, 0.5];
 
-                for (const escala of escalas) {
-                    canvas.width  = img.naturalWidth  * escala;
-                    canvas.height = img.naturalHeight * escala;
-                    ctx.fillStyle = "#ffffff";
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            for (const escala of escalas) {
+                canvas.width  = img.naturalWidth  * escala;
+                canvas.height = img.naturalHeight * escala;
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                        inversionAttempts: "attemptBoth"
-                    });
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-                    if (code && code.data) {
-                        encontrado = true;
-                        procesarQREscaneado(code.data);
-                        break;
-                    }
+                // Verificar que jsQR está disponible
+                if (typeof jsQR === 'undefined') {
+                    alert("❌ Error: la librería jsQR no cargó. Verifica tu conexión a internet.");
+                    return;
                 }
 
-                if (!encontrado) {
-                    alert("❌ No se pudo leer el QR.\n\nConsejos:\n• Usa la imagen PNG descargada con 'Guardar QR'\n• Asegúrate que el QR no esté cortado\n• Evita sombras o brillo excesivo");
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "attemptBoth"
+                });
+
+                if (code && code.data) {
+                    encontrado = true;
+                    procesarQREscaneado(code.data);
+                    break;
                 }
-            };
-            img.onerror = () => alert("❌ No se pudo cargar la imagen.");
-            img.src = e.target.result;
+            }
+
+            if (!encontrado) {
+                alert("❌ No se pudo leer el QR.\n\nAsegúrate de:\n• Subir primero el PNG con 'Guardar QR' desde esta misma app\n• Que la imagen no esté recortada\n• Que el QR sea de este sistema");
+            }
         };
-        reader.readAsDataURL(file);
-    }
+        img.onerror = () => alert("❌ No se pudo cargar la imagen.");
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
 
     // ── Procesar texto del QR ──
     function procesarQREscaneado(texto) {
