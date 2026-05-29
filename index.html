@@ -234,7 +234,7 @@
     }
 
     // ── Leer QR desde imagen usando canvas pixel por pixel ──
-    function escanearArchivo(event) {
+  function escanearArchivo(event) {
     const file = event.target.files[0];
     if (!file) return;
     event.target.value = '';
@@ -243,38 +243,48 @@
     reader.onload = function(e) {
         const img = new Image();
         img.onload = function() {
-            let encontrado = false;
-            // Usamos una escala base y añadimos un margen (padding)
-            const escala = 1.5; 
-            const padding = 40; // Margen blanco extra
-            
             const canvas = document.createElement('canvas');
-            // El canvas ahora será más grande que la imagen por el margen
-            canvas.width = (img.naturalWidth * escala) + (padding * 2);
-            canvas.height = (img.naturalHeight * escala) + (padding * 2);
-            
             const ctx = canvas.getContext('2d');
             
-            // 1. Pintar todo el fondo de blanco
+            // 1. IMPORTANTE: Desactivar el suavizado de imagen
+            ctx.imageSmoothingEnabled = false;
+            
+            // Escalamos la imagen para asegurar que los puntos del QR sean grandes
+            const scale = 2;
+            canvas.width = img.naturalWidth * scale;
+            canvas.height = img.naturalHeight * scale;
+            
+            // 2. Pintar fondo blanco
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // 2. Dibujar la imagen centrada con el padding
-            ctx.drawImage(img, padding, padding, img.naturalWidth * escala, img.naturalHeight * escala);
+            // 3. Dibujar imagen escalada
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
+            // 4. Procesar
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            
             const code = jsQR(imageData.data, imageData.width, imageData.height, {
                 inversionAttempts: "attemptBoth"
             });
 
             if (code && code.data) {
-                console.log("¡Éxito! QR detectado tras añadir margen.");
-                encontrado = true;
+                console.log("¡Éxito! QR decodificado.");
                 procesarQREscaneado(code.data);
             } else {
-                console.log("Aun con margen, jsQR no pudo leerlo. Revisa la calidad de la imagen.");
-                alert("❌ No se pudo leer el QR. Asegúrate de que la imagen no esté borrosa.");
+                console.log("Falló la lectura. Probando escala 1...");
+                // Intento fallback: Dibujar sin escalar si lo anterior falló
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(img, 0, 0);
+                const imageData2 = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code2 = jsQR(imageData2.data, canvas.width, canvas.height);
+                
+                if (code2 && code2.data) {
+                    procesarQREscaneado(code2.data);
+                } else {
+                    alert("❌ No se pudo leer el QR. Intenta tomar la foto con mejor iluminación y sin reflejos.");
+                }
             }
         };
         img.src = e.target.result;
