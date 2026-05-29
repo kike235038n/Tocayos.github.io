@@ -9,7 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 </head>
 <body>
@@ -184,7 +184,7 @@
         return BASE_URL + "?d=" + encodeURIComponent(b64);
     }
 
-    // ── Mostrar QR con qrcode.js (genera canvas, compatible con jsQR) ──
+    // ── Mostrar QR ──
     function mostrarQR() {
         if (registros.length === 0) {
             alert("No hay datos en la tabla para generar el QR.");
@@ -200,18 +200,13 @@
         const contenedor = document.getElementById('qrcode');
         contenedor.innerHTML = '';
 
-        const canvas = document.createElement('canvas');
-        contenedor.appendChild(canvas);
-
-        QRCode.toCanvas(canvas, url, {
-            width: 256,
-            margin: 2,
-            color: { dark: '#000000', light: '#ffffff' }
-        }, function(error) {
-            if (error) {
-                contenedor.innerHTML = '<p style="color:red">Error generando QR</p>';
-                console.error(error);
-            }
+        new QRCode(contenedor, {
+            text:         url,
+            width:        256,
+            height:       256,
+            colorDark:    "#000000",
+            colorLight:   "#ffffff",
+            correctLevel: QRCode.CorrectLevel.M
         });
 
         document.getElementById('qr-info').textContent =
@@ -221,17 +216,29 @@
     // ── Descargar QR como PNG ──
     function descargarQRImagen() {
         const canvas = document.querySelector('#qrcode canvas');
+        const img    = document.querySelector('#qrcode img');
+
         if (canvas) {
             const link = document.createElement('a');
             link.download = 'inventario-qr.png';
             link.href = canvas.toDataURL('image/png');
+            link.click();
+        } else if (img) {
+            const tmpCanvas = document.createElement('canvas');
+            tmpCanvas.width  = 256;
+            tmpCanvas.height = 256;
+            const ctx = tmpCanvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, 256, 256);
+            const link = document.createElement('a');
+            link.download = 'inventario-qr.png';
+            link.href = tmpCanvas.toDataURL('image/png');
             link.click();
         } else {
             alert("Espera a que el QR termine de generarse.");
         }
     }
 
-    // ── Leer QR desde imagen con jsQR ──
+    // ── Leer QR desde imagen ──
     function escanearArchivo(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -245,11 +252,13 @@
                 const ctx    = canvas.getContext('2d');
                 let encontrado = false;
 
-                const escalas = [1, 2, 3, 0.5, 1.5];
+                const escalas = [1, 2, 3, 4, 0.5];
 
                 for (const escala of escalas) {
-                    canvas.width  = img.width  * escala;
-                    canvas.height = img.height * escala;
+                    canvas.width  = img.naturalWidth  * escala;
+                    canvas.height = img.naturalHeight * escala;
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
                     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -313,7 +322,7 @@
         document.getElementById(id).classList.add('activa');
     }
 
-    // ── Utilidades de fecha ──
+    // ── Formatear fecha ──
     function formatearFechaEspanol(fechaRaw) {
         if (!fechaRaw) return "";
         const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -394,7 +403,7 @@
             : "";
     }
 
-    // ── Renderizar tabla kardex ──
+    // ── Renderizar tabla ──
     function calcularYRenderizarKardex() {
         const tbody = document.getElementById('kardexBody');
         tbody.innerHTML = '';
