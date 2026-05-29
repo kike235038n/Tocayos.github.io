@@ -243,41 +243,38 @@
     reader.onload = function(e) {
         const img = new Image();
         img.onload = function() {
-            console.log(`Imagen cargada: ${img.naturalWidth}x${img.naturalHeight}`);
             let encontrado = false;
-            // Añadimos una escala más grande por si la imagen es pequeña
-            const escalas = [1, 1.5, 2]; 
+            // Usamos una escala base y añadimos un margen (padding)
+            const escala = 1.5; 
+            const padding = 40; // Margen blanco extra
+            
+            const canvas = document.createElement('canvas');
+            // El canvas ahora será más grande que la imagen por el margen
+            canvas.width = (img.naturalWidth * escala) + (padding * 2);
+            canvas.height = (img.naturalHeight * escala) + (padding * 2);
+            
+            const ctx = canvas.getContext('2d');
+            
+            // 1. Pintar todo el fondo de blanco
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 2. Dibujar la imagen centrada con el padding
+            ctx.drawImage(img, padding, padding, img.naturalWidth * escala, img.naturalHeight * escala);
 
-            for (const escala of escalas) {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.naturalWidth * escala;
-                canvas.height = img.naturalHeight * escala;
-                const ctx = canvas.getContext('2d');
-                
-                // Fondo blanco obligatorio
-                ctx.fillStyle = "#ffffff";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: "attemptBoth"
+            });
 
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                
-                console.log(`Intentando escala ${escala}...`);
-                const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                    inversionAttempts: "attemptBoth"
-                });
-
-                if (code && code.data) {
-                    console.log("¡QR Detectado con éxito!", code.data);
-                    encontrado = true;
-                    procesarQREscaneado(code.data);
-                    break;
-                } else {
-                    console.log(`Escala ${escala} fallida.`);
-                }
-            }
-
-            if (!encontrado) {
-                alert("❌ No se pudo leer el QR. Revisa la consola (F12) para más detalles.");
+            if (code && code.data) {
+                console.log("¡Éxito! QR detectado tras añadir margen.");
+                encontrado = true;
+                procesarQREscaneado(code.data);
+            } else {
+                console.log("Aun con margen, jsQR no pudo leerlo. Revisa la calidad de la imagen.");
+                alert("❌ No se pudo leer el QR. Asegúrate de que la imagen no esté borrosa.");
             }
         };
         img.src = e.target.result;
